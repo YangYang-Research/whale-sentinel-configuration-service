@@ -5,9 +5,11 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/YangYang-Research/whale-sentinel-services/ws-configuration-service/shared"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -62,10 +64,10 @@ func GetDomain(fullUrl string) (string, error) {
 	return parsedUrl.Host, nil
 }
 
-func GenerateGWEventInfo(req shared.GWRequestBody) (string, string) {
-	hashInput := req.GWPayload.GWData.Type + "|" + req.GWPayload.GWData.Key + "|" + req.RequestCreatedAt
+func GenerateCFEventInfo(req shared.CFRequestBody) (string, string) {
+	hashInput := req.CFPayload.CFData.Type + "|" + req.CFPayload.CFData.Key + "|" + req.RequestCreatedAt
 	eventID := sha256.Sum256([]byte(hashInput))
-	eventInfo := req.GWPayload.GWData.Key + "|" + "WS_CONFIGURATION_SERVICE" + "|" + hex.EncodeToString(eventID[:])
+	eventInfo := req.CFPayload.CFData.Key + "|" + "WS_CONFIGURATION_SERVICE" + "|" + hex.EncodeToString(eventID[:])
 	return eventInfo, hex.EncodeToString(eventID[:])
 }
 
@@ -77,4 +79,17 @@ func SendErrorResponse(w http.ResponseWriter, message string, errorCode int) {
 		Message:   message,
 		ErrorCode: errorCode,
 	})
+}
+
+func ExtractEventInfo(enventInfo string) (string, string, string, error) {
+	// Split the event_id by the "|" delimiter
+	parts := strings.Split(enventInfo, "|")
+
+	// Ensure the split result has exactly 3 parts
+	if len(parts) != 3 {
+		return "", "", "", fmt.Errorf("invalid event_info format: %s", enventInfo)
+	}
+
+	// Return the extracted components
+	return parts[0], parts[1], parts[2], nil
 }

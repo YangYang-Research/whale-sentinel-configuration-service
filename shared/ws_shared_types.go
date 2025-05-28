@@ -1,29 +1,30 @@
 package shared
 
 type (
-	GWRequestBody struct {
-		GWPayload        GWPayload `json:"payload"`
+	CFRequestBody struct {
+		EventInfo        string    `json:"event_info"`
+		CFPayload        CFPayload `json:"payload"`
 		RequestCreatedAt string    `json:"request_created_at"`
 	}
 
-	GWPayload struct {
-		GWData GWData `json:"data"`
+	CFPayload struct {
+		CFData CFData `json:"data"`
 	}
 
-	GWData struct {
+	CFData struct {
 		Type string `json:"type"`
 		Key  string `json:"key"`
 	}
 
-	GWResponseBody struct {
-		Status             string       `json:"status"`
-		Message            string       `json:"message"`
-		Type               string       `json:"type"`
-		Key                string       `json:"key"`
-		Profile            AgentProfile `json:"profile"`
-		EventInfo          string       `json:"event_info"`
-		RequestCreatedAt   string       `json:"request_created_at"`
-		RequestProcessedAt string       `json:"request_processed_at"`
+	CFResponseBody struct {
+		Status             string `json:"status"`
+		Message            string `json:"message"`
+		Type               string `json:"type"`
+		Key                string `json:"key"`
+		Profile            string `json:"profile"`
+		EventInfo          string `json:"event_info"`
+		RequestCreatedAt   string `json:"request_created_at"`
+		RequestProcessedAt string `json:"request_processed_at"`
 	}
 
 	AgentProfile struct {

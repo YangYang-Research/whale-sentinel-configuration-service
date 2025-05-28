@@ -9,13 +9,17 @@ import (
 )
 
 // Helper functions
-func ValidateGWRequest(req shared.GWRequestBody) error {
-	if req.GWPayload.GWData.Type == "" || req.GWPayload.GWData.Key == "" {
+func ValidateCFRequest(req shared.CFRequestBody) error {
+	if req.CFPayload.CFData.Type == "" || req.CFPayload.CFData.Key == "" {
 		return fmt.Errorf("missing required fields")
 	}
 
-	if !regexp.MustCompile(`^[a-zA-Z0-9_-]+$`).MatchString(req.GWPayload.GWData.Type) {
+	if !regexp.MustCompile(`^[a-zA-Z0-9_-]+$`).MatchString(req.CFPayload.CFData.Type) {
 		return fmt.Errorf("invalid type format")
+	}
+
+	if req.CFPayload.CFData.Type != "agent" && req.CFPayload.CFData.Type != "service" {
+		return fmt.Errorf("type must be either 'agent' or 'service'")
 	}
 
 	if _, err := time.Parse(time.RFC3339, req.RequestCreatedAt); err != nil {
