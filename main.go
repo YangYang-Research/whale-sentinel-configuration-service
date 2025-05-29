@@ -119,7 +119,7 @@ func handleConfiguration(w http.ResponseWriter, r *http.Request) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		profile, err = processGetProfile(req)
+		profile, getProfileErr = processGetProfile(req)
 	}()
 
 	wg.Wait()
