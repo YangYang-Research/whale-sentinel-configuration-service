@@ -142,7 +142,9 @@ func handleConfiguration(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 
-	handlerRedis(req.CFPayload.CFData.Key, profile)
+	if profile != "" {
+		handlerRedis(req.CFPayload.CFData.Key, profile)
+	}
 	// Log the request to the logg collector
 	go func(agentID string, eventInfo string, rawRequest string) {
 		// Log the request to the log collector
@@ -184,6 +186,10 @@ func processGetProfile(req shared.CFRequestBody) (string, error) {
 	var response map[string]interface{}
 	if err := json.Unmarshal(responseData, &response); err != nil {
 		return "", fmt.Errorf("failed to unmarshal response: %v", err)
+	}
+
+	if response["status"] != "success" {
+		return "", fmt.Errorf("failed to get profile: %s", response["message"])
 	}
 
 	data := response["data"].(map[string]interface{})
