@@ -114,7 +114,7 @@ func Log(level string, service_name string, log_data map[string]interface{}) {
 	var err error
 
 	switch service_name {
-	case "ws-gateway-service":
+	case "ws-configuration-service":
 		entry := WSGate_LogEntry{
 			Name:               service_name,
 			AgentID:            log_data["agent_id"].(string),

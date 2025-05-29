@@ -142,6 +142,7 @@ func handleConfiguration(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 
+	handlerRedis(req.CFPayload.CFData.Key, profile)
 	// Log the request to the logg collector
 	go func(agentID string, eventInfo string, rawRequest string) {
 		// Log the request to the log collector
@@ -160,7 +161,7 @@ func handleConfiguration(w http.ResponseWriter, r *http.Request) {
 			"timestamp":            time.Now().Format(time.RFC3339),
 		}
 
-		logger.Log("INFO", "ws-gateway-service", logData)
+		logger.Log("INFO", "ws-configuration-service", logData)
 	}(agentID, eventInfo, (req.CFPayload.CFData.Type + " " + req.CFPayload.CFData.Key))
 }
 
@@ -271,13 +272,13 @@ func apiKeyAuthMiddleware(next http.Handler) http.Handler {
 
 // Main function
 func main() {
-	log.Info("WS Gateway Service is running on port 5000...")
+	log.Info("WS Configuration Service is running on port 5004...")
 	// Initialize the logger
 	logMaxSize, _ := strconv.Atoi(os.Getenv("LOG_MAX_SIZE"))
 	logMaxBackups, _ := strconv.Atoi(os.Getenv("LOG_MAX_BACKUPS"))
 	logMaxAge, _ := strconv.Atoi(os.Getenv("LOG_MAX_AGE"))
 	logCompression, _ := strconv.ParseBool(os.Getenv("LOG_COMPRESSION"))
-	logger.SetupWSLogger("ws-gateway-service", logMaxSize, logMaxBackups, logMaxAge, logCompression)
+	logger.SetupWSLogger("ws-configuration-service", logMaxSize, logMaxBackups, logMaxAge, logCompression)
 	// Wrap the handler with a 30-second timeout
 	timeoutHandlerCF := http.TimeoutHandler(apiKeyAuthMiddleware(http.HandlerFunc(handleConfiguration)), 30*time.Second, "Request timed out")
 	// timeoutHandlerCFS := http.TimeoutHandler(apiKeyAuthMiddleware(http.HandlerFunc(handleConfigurationSynchronize)), 30*time.Second, "Request timed out")
