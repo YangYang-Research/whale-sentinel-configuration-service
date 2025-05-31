@@ -204,7 +204,7 @@ func makeHTTPRequest(url, endpoint string, body interface{}) ([]byte, error) {
 		return nil, fmt.Errorf("failed to marshal request body: %v", err)
 	}
 
-	apiKey, err := getAPIKey()
+	secretValue, err := getSecret(os.Getenv("WHALE_SENTINEL_CONTROLLER_SECRET_KEY_NAME"))
 	if err != nil {
 		return nil, fmt.Errorf("failed to get API key: %v", err)
 	}
@@ -215,7 +215,7 @@ func makeHTTPRequest(url, endpoint string, body interface{}) ([]byte, error) {
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	auth := "ws:" + apiKey
+	auth := "ws:" + secretValue
 	req.Header.Set("Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte(auth)))
 
 	client := &http.Client{
@@ -236,20 +236,20 @@ func makeHTTPRequest(url, endpoint string, body interface{}) ([]byte, error) {
 }
 
 // getAPIKey retrieves the API key based on the configuration
-func getAPIKey() (string, error) {
+func getSecret(key string) (string, error) {
 	awsRegion := os.Getenv("AWS_REGION")
 	awsSecretName := os.Getenv("AWS_SECRET_NAME")
-	awsAPISecretKeyName := os.Getenv("AWS_API_SECRET_KEY_NAME")
+	awsSecretKeyName := key
 
-	awsAPIKeyVaule, err := helper.GetAWSSecret(awsRegion, awsSecretName, awsAPISecretKeyName)
+	awsSecretVaule, err := helper.GetAWSSecret(awsRegion, awsSecretName, awsSecretKeyName)
 
-	return awsAPIKeyVaule, err
+	return awsSecretVaule, err
 }
 
 // apiKeyAuthMiddleware is a middleware that handles API Key authentication
 func apiKeyAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		apiKey, err := getAPIKey()
+		secretValue, err := getSecret(os.Getenv("WHALE_SENTINEL_SERVICE_SECRET_KEY_NAME"))
 		if err != nil {
 			helper.SendErrorResponse(w, "Internal server error", http.StatusInternalServerError)
 			return
@@ -269,7 +269,7 @@ func apiKeyAuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		expectedAuthValue := fmt.Sprintf("ws:%s", apiKey)
+		expectedAuthValue := fmt.Sprintf("ws:%s", secretValue)
 		if string(decodedAuthHeader) != expectedAuthValue {
 			helper.SendErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
 			return
