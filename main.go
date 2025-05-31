@@ -145,6 +145,7 @@ func handleConfiguration(w http.ResponseWriter, r *http.Request) {
 	if profile != "" {
 		handlerRedis(req.CFPayload.CFData.Key, profile)
 	}
+	log.Infof("POST %v - 200", r.URL)
 	// Log the request to the logg collector
 	go func(agentID string, eventInfo string, rawRequest string) {
 		// Log the request to the log collector
@@ -156,6 +157,7 @@ func handleConfiguration(w http.ResponseWriter, r *http.Request) {
 			"event_info":           eventInfo,
 			"event_id":             eventID,
 			"type":                 "SERVICE_EVENT",
+			"service_action":       "GET_PROFILE",
 			"request_created_at":   req.RequestCreatedAt,
 			"request_processed_at": time.Now().Format(time.RFC3339),
 			"title":                "Received request from agent",
@@ -229,6 +231,7 @@ func makeHTTPRequest(url, endpoint string, body interface{}) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
+	log.Infof("POST %v - %v", url+endpoint, resp.StatusCode)
 	return io.ReadAll(resp.Body)
 }
 

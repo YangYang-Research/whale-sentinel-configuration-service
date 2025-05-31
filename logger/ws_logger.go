@@ -23,7 +23,7 @@ type (
 		Timestamp string `json:"timestamp"`
 	}
 
-	WSGate_LogEntry struct {
+	WSConfig_LogEntry struct {
 		Name               string `json:"name"`
 		AgentID            string `json:"agent_id"`
 		Source             string `json:"source"`
@@ -32,6 +32,7 @@ type (
 		Level              string `json:"level"`
 		EventID            string `json:"event_id"`
 		Type               string `json:"type"`
+		ServiceAction      string `json:"service_action"`
 		RequestCreatedAt   int64  `json:"request_created_at"`
 		RequestProcessedAt int64  `json:"request_processed_at"`
 		Title              string `json:"title"`
@@ -115,7 +116,7 @@ func Log(level string, service_name string, log_data map[string]interface{}) {
 
 	switch service_name {
 	case "ws-configuration-service":
-		entry := WSGate_LogEntry{
+		entry := WSConfig_LogEntry{
 			Name:               service_name,
 			AgentID:            log_data["agent_id"].(string),
 			Source:             log_data["source"].(string),
@@ -124,6 +125,7 @@ func Log(level string, service_name string, log_data map[string]interface{}) {
 			Level:              strings.ToUpper(level),
 			EventID:            log_data["event_id"].(string),
 			Type:               log_data["type"].(string),
+			ServiceAction:      log_data["service_action"].(string),
 			RequestCreatedAt:   toUnixTime(log_data["request_created_at"]),
 			RequestProcessedAt: toUnixTime(log_data["request_processed_at"]),
 			Title:              log_data["title"].(string),
