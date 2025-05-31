@@ -1,4 +1,4 @@
-module github.com/YangYang-Research/whale-sentinel-services/ws-configuration-service
+module github.com/YangYang-Research/whale-sentinel-services/whale-sentinel-configuration-service
 
 go 1.24.0
 
