@@ -64,10 +64,10 @@ func GetDomain(fullUrl string) (string, error) {
 	return parsedUrl.Host, nil
 }
 
-func GenerateCFEventInfo(req shared.CFRequestBody) (string, string) {
-	hashInput := req.CFPayload.CFData.Type + "|" + req.CFPayload.CFData.Key + "|" + req.RequestCreatedAt
+func GenerateCFGP_EventInfo(req shared.CFGP_RequestBody) (string, string) {
+	hashInput := req.CFGP_Payload.CFGP_Data.Type + "|" + req.CFGP_Payload.CFGP_Data.Key + "|" + req.RequestCreatedAt
 	eventID := sha256.Sum256([]byte(hashInput))
-	eventInfo := req.CFPayload.CFData.Key + "|" + "WS_CONFIGURATION_SERVICE" + "|" + hex.EncodeToString(eventID[:])
+	eventInfo := req.CFGP_Payload.CFGP_Data.Key + "|" + "WS_CONFIGURATION_SERVICE" + "|" + hex.EncodeToString(eventID[:])
 	return eventInfo, hex.EncodeToString(eventID[:])
 }
 

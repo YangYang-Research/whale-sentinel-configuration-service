@@ -1,22 +1,49 @@
 package shared
 
 type (
-	CFRequestBody struct {
-		EventInfo        string    `json:"event_info"`
-		CFPayload        CFPayload `json:"payload"`
-		RequestCreatedAt string    `json:"request_created_at"`
+	CFGP_RequestBody struct {
+		EventInfo        string       `json:"event_info"`
+		CFGP_Payload     CFGP_Payload `json:"payload"`
+		RequestCreatedAt string       `json:"request_created_at"`
 	}
 
-	CFPayload struct {
-		CFData CFData `json:"data"`
+	CFGP_Payload struct {
+		CFGP_Data CFGPData `json:"data"`
 	}
 
-	CFData struct {
+	CFGPData struct {
 		Type string `json:"type"`
 		Key  string `json:"key"`
 	}
 
-	CFResponseBody struct {
+	CFGP_ResponseBody struct {
+		Status             string `json:"status"`
+		Message            string `json:"message"`
+		Type               string `json:"type"`
+		Key                string `json:"key"`
+		Profile            string `json:"profile"`
+		EventInfo          string `json:"event_info"`
+		RequestCreatedAt   string `json:"request_created_at"`
+		RequestProcessedAt string `json:"request_processed_at"`
+	}
+
+	CFPS_RequestBody struct {
+		EventInfo        string       `json:"event_info"`
+		CFPS_Payload     CFPS_Payload `json:"payload"`
+		RequestCreatedAt string       `json:"request_created_at"`
+	}
+
+	CFPS_Payload struct {
+		CFPS_Data CFPS_Data `json:"data"`
+	}
+
+	CFPS_Data struct {
+		Type string `json:"type"`
+		Key  string `json:"key"`
+		Sync map[string]interface{}
+	}
+
+	CFPS_ResponseBody struct {
 		Status             string `json:"status"`
 		Message            string `json:"message"`
 		Type               string `json:"type"`
