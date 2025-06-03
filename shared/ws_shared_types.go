@@ -17,14 +17,18 @@ type (
 	}
 
 	CFGP_ResponseBody struct {
-		Status             string `json:"status"`
-		Message            string `json:"message"`
-		Type               string `json:"type"`
-		Key                string `json:"key"`
-		Profile            string `json:"profile"`
-		EventInfo          string `json:"event_info"`
-		RequestCreatedAt   string `json:"request_created_at"`
-		RequestProcessedAt string `json:"request_processed_at"`
+		Status             string            `json:"status"`
+		Message            string            `json:"message"`
+		Data               CFGP_ResponseData `json:"data"`
+		EventInfo          string            `json:"event_info"`
+		RequestCreatedAt   string            `json:"request_created_at"`
+		RequestProcessedAt string            `json:"request_processed_at"`
+	}
+
+	CFGP_ResponseData struct {
+		Type    string `json:"type"`
+		Key     string `json:"key"`
+		Profile string `json:"profile"`
 	}
 
 	CFPS_RequestBody struct {
@@ -38,22 +42,25 @@ type (
 	}
 
 	CFPS_Data struct {
-		Type string `json:"type"`
-		Key  string `json:"key"`
-		Sync map[string]interface{}
+		Type    string                 `json:"type"`
+		Key     string                 `json:"key"`
+		Profile map[string]interface{} `json:"profile"`
 	}
 
 	CFPS_ResponseBody struct {
-		Status             string `json:"status"`
-		Message            string `json:"message"`
-		Type               string `json:"type"`
-		Key                string `json:"key"`
-		Profile            string `json:"profile"`
-		EventInfo          string `json:"event_info"`
-		RequestCreatedAt   string `json:"request_created_at"`
-		RequestProcessedAt string `json:"request_processed_at"`
+		Status             string            `json:"status"`
+		Message            string            `json:"message"`
+		Data               CFPS_ResponseData `json:"data"`
+		EventInfo          string            `json:"event_info"`
+		RequestCreatedAt   string            `json:"request_created_at"`
+		RequestProcessedAt string            `json:"request_processed_at"`
 	}
 
+	CFPS_ResponseData struct {
+		Type    string `json:"type"`
+		Key     string `json:"key"`
+		Profile string `json:"profile"`
+	}
 	AgentProfile struct {
 		RunningMode                   string                      `json:"running_mode"`
 		LastRunMode                   string                      `json:"last_run_mode"`

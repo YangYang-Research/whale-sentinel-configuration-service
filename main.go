@@ -111,6 +111,8 @@ func handleConfigurationGetProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var (
+		status        string
+		message       string
 		profile       string
 		getProfileErr error
 		wg            sync.WaitGroup
@@ -119,7 +121,7 @@ func handleConfigurationGetProfile(w http.ResponseWriter, r *http.Request) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		profile, getProfileErr = processGetProfile(req)
+		status, profile, getProfileErr = processGetProfile(req)
 	}()
 
 	wg.Wait()
@@ -129,15 +131,24 @@ func handleConfigurationGetProfile(w http.ResponseWriter, r *http.Request) {
 		}).Error("Error processing get profile request")
 	}
 	eventInfo := strings.Replace(req.EventInfo, serviceName, "WS_CONFIGURATION_SERVICE", -1)
+
+	if status == "Success" {
+		message = "Profile retrieved successfully"
+	} else {
+		message = "Failed to retrieve profile"
+	}
+
 	response := shared.CFGP_ResponseBody{
-		Status:             "success",
-		Message:            "Profile retrieved successfully",
-		Type:               req.CFGP_Payload.CFGP_Data.Type,
-		Key:                req.CFGP_Payload.CFGP_Data.Key,
-		Profile:            profile,
+		Status:  status,
+		Message: message,
+		Data: shared.CFGP_ResponseData{
+			Type:    req.CFGP_Payload.CFGP_Data.Type,
+			Key:     req.CFGP_Payload.CFGP_Data.Key,
+			Profile: profile,
+		},
 		EventInfo:          eventInfo,
 		RequestCreatedAt:   req.RequestCreatedAt,
-		RequestProcessedAt: time.Now().Format(time.RFC3339),
+		RequestProcessedAt: time.Now().UTC().Format("2006-01-02T15:04:05Z"),
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
@@ -159,43 +170,48 @@ func handleConfigurationGetProfile(w http.ResponseWriter, r *http.Request) {
 			"type":                 "SERVICE_EVENT",
 			"service_action":       "GET_PROFILE",
 			"request_created_at":   req.RequestCreatedAt,
-			"request_processed_at": time.Now().Format(time.RFC3339),
+			"request_processed_at": time.Now().UTC().Format("2006-01-02T15:04:05Z"),
 			"title":                "Received request from agent",
 			"raw_request":          rawRequest,
-			"timestamp":            time.Now().Format(time.RFC3339),
+			"timestamp":            time.Now().UTC().Format("2006-01-02T15:04:05Z"),
 		}
 
 		logger.Log("INFO", "ws-configuration-service", logData)
 	}(agentID, eventInfo, (req.CFGP_Payload.CFGP_Data.Type + " " + req.CFGP_Payload.CFGP_Data.Key))
 }
 
-func processGetProfile(req shared.CFGP_RequestBody) (string, error) {
+func processGetProfile(req shared.CFGP_RequestBody) (string, string, error) {
 	log.WithFields(logrus.Fields{
 		"msg": "Key :" + req.CFGP_Payload.CFGP_Data.Key,
 	}).Debug("Processing get profile request")
 
 	requestBody := map[string]interface{}{
 		"event_info": req.EventInfo,
-		"key":        req.CFGP_Payload.CFGP_Data.Key,
-		"type":       req.CFGP_Payload.CFGP_Data.Type,
+		"payload": map[string]interface{}{
+			"data": map[string]interface{}{
+				"key":  req.CFGP_Payload.CFGP_Data.Key,
+				"type": req.CFGP_Payload.CFGP_Data.Type,
+			},
+		},
+		"request_created_at": req.RequestCreatedAt,
 	}
 
 	responseData, err := makeHTTPRequest(os.Getenv("WS_CONTROLLER_PROCESSOR_URL"), os.Getenv("WS_CONTROLLER_PROCESSOR_ENDPOINT")+"/profile", requestBody)
 	if err != nil {
-		return "", err
+		return "Error", "", err
 	}
 
 	var response map[string]interface{}
 	if err := json.Unmarshal(responseData, &response); err != nil {
-		return "", fmt.Errorf("failed to unmarshal response: %v", err)
+		return response["status"].(string), "", fmt.Errorf("failed to unmarshal response: %v", err)
 	}
 
-	if response["status"] != "success" {
-		return "", fmt.Errorf("failed to get profile: %s", response["message"])
+	if response["status"] != "Success" {
+		return response["status"].(string), "", fmt.Errorf("failed to get profile: %s", response["message"])
 	}
 
 	data := response["data"].(map[string]interface{})
-	return data["profile"].(string), nil
+	return response["status"].(string), data["profile"].(string), nil
 }
 
 // handleConfigurationProfileSynchronize processes incoming requests
@@ -224,6 +240,8 @@ func handleConfigurationProfileSynchronize(w http.ResponseWriter, r *http.Reques
 	}
 
 	var (
+		status        string
+		message       string
 		profile       string
 		getProfileErr error
 		wg            sync.WaitGroup
@@ -232,7 +250,7 @@ func handleConfigurationProfileSynchronize(w http.ResponseWriter, r *http.Reques
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		profile, getProfileErr = processProfileSynchronize(req)
+		status, profile, getProfileErr = processProfileSynchronize(req)
 	}()
 
 	wg.Wait()
@@ -242,15 +260,24 @@ func handleConfigurationProfileSynchronize(w http.ResponseWriter, r *http.Reques
 		}).Error("Error processing get profile request")
 	}
 	eventInfo := strings.Replace(req.EventInfo, serviceName, "WS_CONFIGURATION_SERVICE", -1)
-	response := shared.CFGP_ResponseBody{
-		Status:             "success",
-		Message:            "Profile retrieved successfully",
-		Type:               req.CFPS_Payload.CFPS_Data.Type,
-		Key:                req.CFPS_Payload.CFPS_Data.Key,
-		Profile:            profile,
+
+	if status == "Success" {
+		message = "Profile synchronize successfully"
+	} else {
+		message = "Failed to synchronize profile"
+	}
+
+	response := shared.CFPS_ResponseBody{
+		Status:  status,
+		Message: message,
+		Data: shared.CFPS_ResponseData{
+			Type:    req.CFPS_Payload.CFPS_Data.Type,
+			Key:     req.CFPS_Payload.CFPS_Data.Key,
+			Profile: profile,
+		},
 		EventInfo:          eventInfo,
 		RequestCreatedAt:   req.RequestCreatedAt,
-		RequestProcessedAt: time.Now().Format(time.RFC3339),
+		RequestProcessedAt: time.Now().UTC().Format("2006-01-02T15:04:05Z"),
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
@@ -272,44 +299,49 @@ func handleConfigurationProfileSynchronize(w http.ResponseWriter, r *http.Reques
 			"type":                 "SERVICE_EVENT",
 			"service_action":       "GET_PROFILE",
 			"request_created_at":   req.RequestCreatedAt,
-			"request_processed_at": time.Now().Format(time.RFC3339),
+			"request_processed_at": time.Now().UTC().Format("2006-01-02T15:04:05Z"),
 			"title":                "Received request from agent",
 			"raw_request":          rawRequest,
-			"timestamp":            time.Now().Format(time.RFC3339),
+			"timestamp":            time.Now().UTC().Format("2006-01-02T15:04:05Z"),
 		}
 
 		logger.Log("INFO", "ws-configuration-service", logData)
 	}(agentID, eventInfo, (req.CFPS_Payload.CFPS_Data.Type + " " + req.CFPS_Payload.CFPS_Data.Key))
 }
 
-func processProfileSynchronize(req shared.CFPS_RequestBody) (string, error) {
+func processProfileSynchronize(req shared.CFPS_RequestBody) (string, string, error) {
 	log.WithFields(logrus.Fields{
 		"msg": "Key :" + req.CFPS_Payload.CFPS_Data.Key,
 	}).Debug("Processing get profile request")
 
 	requestBody := map[string]interface{}{
 		"event_info": req.EventInfo,
-		"key":        req.CFPS_Payload.CFPS_Data.Key,
-		"type":       req.CFPS_Payload.CFPS_Data.Type,
-		"profile":    req.CFPS_Payload.CFPS_Data.Sync,
+		"payload": map[string]interface{}{
+			"data": map[string]interface{}{
+				"key":     req.CFPS_Payload.CFPS_Data.Key,
+				"type":    req.CFPS_Payload.CFPS_Data.Type,
+				"profile": req.CFPS_Payload.CFPS_Data.Profile,
+			},
+		},
+		"request_created_at": req.RequestCreatedAt,
 	}
 
 	responseData, err := makeHTTPRequest(os.Getenv("WS_CONTROLLER_PROCESSOR_URL"), os.Getenv("WS_CONTROLLER_PROCESSOR_ENDPOINT")+"/profile/synchronize", requestBody)
 	if err != nil {
-		return "", err
+		return "Error", "", err
 	}
 
 	var response map[string]interface{}
 	if err := json.Unmarshal(responseData, &response); err != nil {
-		return "", fmt.Errorf("failed to unmarshal response: %v", err)
+		return response["status"].(string), "", fmt.Errorf("failed to unmarshal response: %v", err)
 	}
 
-	if response["status"] != "success" {
-		return "", fmt.Errorf("failed to sync profile: %s", response["message"])
+	if response["status"] != "Success" {
+		return response["status"].(string), "", fmt.Errorf("failed to sync profile: %s", response["message"])
 	}
 
 	data := response["data"].(map[string]interface{})
-	return data["profile"].(string), nil
+	return response["status"].(string), data["profile"].(string), nil
 }
 
 func makeHTTPRequest(url, endpoint string, body interface{}) ([]byte, error) {
