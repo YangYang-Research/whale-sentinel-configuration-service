@@ -282,7 +282,7 @@ func handleConfigurationProfileSynchronize(w http.ResponseWriter, r *http.Reques
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 
-	if profile != "" {
+	if status == "Success" && profile != "" {
 		handlerRedis(req.CFPS_Payload.CFPS_Data.Key, profile)
 	}
 	log.Infof("POST %v - 200", r.URL)
