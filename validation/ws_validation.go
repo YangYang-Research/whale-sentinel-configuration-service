@@ -10,7 +10,7 @@ import (
 
 // Helper functions
 func ValidateCFGP_Request(req shared.CFGP_RequestBody) error {
-	if req.CFGP_Payload.CFGP_Data.Type == "" || req.CFGP_Payload.CFGP_Data.Key == "" {
+	if req.CFGP_Payload.CFGP_Data.Type == "" || req.CFGP_Payload.CFGP_Data.Name == "" || req.CFGP_Payload.CFGP_Data.Id == "" {
 		return fmt.Errorf("missing required fields")
 	}
 
@@ -29,7 +29,7 @@ func ValidateCFGP_Request(req shared.CFGP_RequestBody) error {
 }
 
 func ValidateCFPS_Request(req shared.CFPS_RequestBody) error {
-	if req.CFPS_Payload.CFPS_Data.Type == "" || req.CFPS_Payload.CFPS_Data.Key == "" {
+	if req.CFPS_Payload.CFPS_Data.Type == "" || req.CFPS_Payload.CFPS_Data.Name == "" || req.CFPS_Payload.CFPS_Data.Id == "" {
 		return fmt.Errorf("missing required fields")
 	}
 

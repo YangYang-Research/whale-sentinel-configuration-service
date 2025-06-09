@@ -13,7 +13,8 @@ type (
 
 	CFGPData struct {
 		Type string `json:"type"`
-		Key  string `json:"key"`
+		Name string `json:"name"`
+		Id   string `json:"id"`
 	}
 
 	CFGP_ResponseBody struct {
@@ -27,7 +28,8 @@ type (
 
 	CFGP_ResponseData struct {
 		Type    string `json:"type"`
-		Key     string `json:"key"`
+		Name    string `json:"name"`
+		Id      string `json:"id"`
 		Profile string `json:"profile"`
 	}
 
@@ -43,7 +45,8 @@ type (
 
 	CFPS_Data struct {
 		Type    string                 `json:"type"`
-		Key     string                 `json:"key"`
+		Name    string                 `json:"name"`
+		Id      string                 `json:"id"`
 		Profile map[string]interface{} `json:"profile"`
 	}
 
@@ -58,7 +61,8 @@ type (
 
 	CFPS_ResponseData struct {
 		Type    string `json:"type"`
-		Key     string `json:"key"`
+		Name    string `json:"name"`
+		Id      string `json:"id"`
 		Profile string `json:"profile"`
 	}
 	AgentProfile struct {

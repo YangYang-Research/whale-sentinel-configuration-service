@@ -65,9 +65,9 @@ func GetDomain(fullUrl string) (string, error) {
 }
 
 func GenerateCFGP_EventInfo(req shared.CFGP_RequestBody) (string, string) {
-	hashInput := req.CFGP_Payload.CFGP_Data.Type + "|" + req.CFGP_Payload.CFGP_Data.Key + "|" + req.RequestCreatedAt
+	hashInput := req.CFGP_Payload.CFGP_Data.Type + "|" + req.CFGP_Payload.CFGP_Data.Name + "|" + req.RequestCreatedAt
 	eventID := sha256.Sum256([]byte(hashInput))
-	eventInfo := req.CFGP_Payload.CFGP_Data.Key + "|" + "WS_CONFIGURATION_SERVICE" + "|" + hex.EncodeToString(eventID[:])
+	eventInfo := req.CFGP_Payload.CFGP_Data.Name + "|" + "WS_CONFIGURATION_SERVICE" + "|" + hex.EncodeToString(eventID[:])
 	return eventInfo, hex.EncodeToString(eventID[:])
 }
 

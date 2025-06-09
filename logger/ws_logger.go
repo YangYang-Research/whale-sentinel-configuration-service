@@ -24,20 +24,22 @@ type (
 	}
 
 	WSConfig_LogEntry struct {
-		Name               string `json:"name"`
-		AgentID            string `json:"agent_id"`
-		Source             string `json:"source"`
-		Destination        string `json:"destination"`
-		EventInfo          string `json:"event_info"`
-		Level              string `json:"level"`
-		EventID            string `json:"event_id"`
-		Type               string `json:"type"`
-		ServiceAction      string `json:"service_action"`
-		RequestCreatedAt   int64  `json:"request_created_at"`
-		RequestProcessedAt int64  `json:"request_processed_at"`
-		Title              string `json:"title"`
-		RawRequest         string `json:"raw_request"`
-		Timestamp          string `json:"timestamp"`
+		Name               string      `json:"name"`
+		AgentID            string      `json:"agent_id"`
+		Source             string      `json:"source"`
+		Destination        string      `json:"destination"`
+		EventInfo          string      `json:"event_info"`
+		Level              string      `json:"level"`
+		EventID            string      `json:"event_id"`
+		Type               string      `json:"type"`
+		Action             string      `json:"action"`
+		ActionResult       string      `json:"action_result"`
+		ActionStatus       string      `json:"acction_status"`
+		RequestCreatedAt   int64       `json:"request_created_at"`
+		RequestProcessedAt int64       `json:"request_processed_at"`
+		Title              string      `json:"title"`
+		RawRequest         interface{} `json:"raw_request"`
+		Timestamp          string      `json:"timestamp"`
 	}
 )
 
@@ -125,12 +127,27 @@ func Log(level string, service_name string, log_data map[string]interface{}) {
 			Level:              strings.ToUpper(level),
 			EventID:            log_data["event_id"].(string),
 			Type:               log_data["type"].(string),
-			ServiceAction:      log_data["service_action"].(string),
+			Action:             log_data["action"].(string),
+			ActionResult:       log_data["action_result"].(string),
+			ActionStatus:       log_data["action_status"].(string),
 			RequestCreatedAt:   toUnixTime(log_data["request_created_at"]),
 			RequestProcessedAt: toUnixTime(log_data["request_processed_at"]),
 			Title:              log_data["title"].(string),
-			RawRequest:         SanitizeRawRequest(log_data["raw_request"].(string)),
-			Timestamp:          log_data["timestamp"].(string),
+			RawRequest: func() interface{} {
+				switch v := log_data["raw_request"].(type) {
+				case string:
+					return SanitizeRawRequest(v)
+				case []byte:
+					return SanitizeRawRequest(string(v))
+				default:
+					// Try to marshal to JSON string if possible
+					if b, err := json.Marshal(v); err == nil {
+						return SanitizeRawRequest(string(b))
+					}
+					return v
+				}
+			}(),
+			Timestamp: log_data["timestamp"].(string),
 		}
 		jsonData, err = json.Marshal(entry)
 
