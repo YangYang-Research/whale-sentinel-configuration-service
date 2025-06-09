@@ -5,7 +5,7 @@ FROM golang:1.24.0-alpine AS builder
 WORKDIR /app
 
 # Copy the Go source code
-COPY . .
+COPY . /app/whale-sentinel-configuration-service
 
 # Install dependencies (if needed)
 WORKDIR /app/whale-sentinel-configuration-service
