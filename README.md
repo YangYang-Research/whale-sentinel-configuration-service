@@ -3,7 +3,6 @@
 [![CodeQL Advanced](https://github.com/YangYang-Research/whale-sentinel-configuration-service/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/YangYang-Research/whale-sentinel-configuration-service/actions/workflows/codeql.yml)
 [![Dependency review](https://github.com/YangYang-Research/whale-sentinel-configuration-service/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/YangYang-Research/whale-sentinel-configuration-service/actions/workflows/dependency-review.yml)
 [![Trivy](https://github.com/YangYang-Research/whale-sentinel-configuration-service/actions/workflows/trivy.yml/badge.svg?branch=main)](https://github.com/YangYang-Research/whale-sentinel-configuration-service/actions/workflows/trivy.yml)
-[![OSSAR](https://github.com/YangYang-Research/whale-sentinel-configuration-service/actions/workflows/ossar.yml/badge.svg?branch=main)](https://github.com/YangYang-Research/whale-sentinel-configuration-service/actions/workflows/ossar.yml)
 
 This module is a critical component of the Whale Sentinel (WS) security framework, ensuring seamless profile caching and real-time synchronization between Agents and WS Services.
 
