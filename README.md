@@ -15,3 +15,7 @@ Key Functions:
 ✅ Optimized System Performance – Reduces latency by caching profiles locally while ensuring that Agents receive the most up-to-date configurations without unnecessary delays.
 
 ✅ Scalable & Secure Architecture – Enables robust, real-time updates across distributed environments while enforcing data integrity and security compliance.
+
+## Contributing
+
+## License
