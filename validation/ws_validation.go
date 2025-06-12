@@ -46,3 +46,22 @@ func ValidateCFPS_Request(req shared.CFPS_RequestBody) error {
 	}
 	return nil
 }
+
+func ValidateCFMCP_Request(req shared.CFMCP_RequestBody) error {
+	if req.CFMCP_Payload.CFMCP_Data.Type == "" || req.CFMCP_Payload.CFMCP_Data.Name == "" {
+		return fmt.Errorf("missing required fields")
+	}
+
+	if !regexp.MustCompile(`^[a-zA-Z0-9_-]+$`).MatchString(req.CFMCP_Payload.CFMCP_Data.Type) {
+		return fmt.Errorf("invalid type format")
+	}
+
+	if req.CFMCP_Payload.CFMCP_Data.Type != "agent" && req.CFMCP_Payload.CFMCP_Data.Type != "service" {
+		return fmt.Errorf("type must be either 'agent' or 'service'")
+	}
+
+	if _, err := time.Parse(time.RFC3339, req.RequestCreatedAt); err != nil {
+		return fmt.Errorf("invalid timestamp format")
+	}
+	return nil
+}
