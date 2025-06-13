@@ -8,10 +8,10 @@ type (
 	}
 
 	CFGP_Payload struct {
-		CFGP_Data CFGPData `json:"data"`
+		CFGP_Data CFGP_Data `json:"data"`
 	}
 
-	CFGPData struct {
+	CFGP_Data struct {
 		Type string `json:"type"`
 		Name string `json:"name"`
 		Id   string `json:"id"`
@@ -44,10 +44,11 @@ type (
 	}
 
 	CFPS_Data struct {
-		Type    string                 `json:"type"`
-		Name    string                 `json:"name"`
-		Id      string                 `json:"id"`
-		Profile map[string]interface{} `json:"profile"`
+		Type      string                 `json:"type"`
+		Name      string                 `json:"name"`
+		Id        string                 `json:"id"`
+		Profile   map[string]interface{} `json:"profile"`
+		IpAddress string                 `json:"ipaddress"`
 	}
 
 	CFPS_ResponseBody struct {
@@ -65,6 +66,30 @@ type (
 		Id      string `json:"id"`
 		Profile string `json:"profile"`
 	}
+
+	CFMCP_RequestBody struct {
+		EventInfo        string        `json:"event_info"`
+		CFMCP_Payload    CFMCP_Payload `json:"payload"`
+		RequestCreatedAt string        `json:"request_created_at"`
+	}
+
+	CFMCP_ResponseBody struct {
+		Status             string `json:"status"`
+		Message            string `json:"message"`
+		RequestCreatedAt   string `json:"request_created_at"`
+		RequestProcessedAt string `json:"request_processed_at"`
+	}
+
+	CFMCP_Payload struct {
+		CFMCP_Data CFMCP_Data `json:"data"`
+	}
+
+	CFMCP_Data struct {
+		Type string `json:"type"`
+		Name string `json:"name"`
+		Id   string `json:"id"`
+	}
+
 	AgentProfile struct {
 		RunningMode                   string                      `json:"running_mode"`
 		LastRunMode                   string                      `json:"last_run_mode"`

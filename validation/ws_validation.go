@@ -10,7 +10,7 @@ import (
 
 // Helper functions
 func ValidateCFGP_Request(req shared.CFGP_RequestBody) error {
-	if req.CFGP_Payload.CFGP_Data.Type == "" || req.CFGP_Payload.CFGP_Data.Name == "" || req.CFGP_Payload.CFGP_Data.Id == "" {
+	if req.CFGP_Payload.CFGP_Data.Type == "" || req.CFGP_Payload.CFGP_Data.Name == "" {
 		return fmt.Errorf("missing required fields")
 	}
 
@@ -19,7 +19,7 @@ func ValidateCFGP_Request(req shared.CFGP_RequestBody) error {
 	}
 
 	if req.CFGP_Payload.CFGP_Data.Type != "agent" && req.CFGP_Payload.CFGP_Data.Type != "service" {
-		return fmt.Errorf("type must be either 'agent' or 'service'")
+		return fmt.Errorf("type must be either 'agent', 'service'")
 	}
 
 	if _, err := time.Parse(time.RFC3339, req.RequestCreatedAt); err != nil {
@@ -38,6 +38,25 @@ func ValidateCFPS_Request(req shared.CFPS_RequestBody) error {
 	}
 
 	if req.CFPS_Payload.CFPS_Data.Type != "agent" && req.CFPS_Payload.CFPS_Data.Type != "service" {
+		return fmt.Errorf("type must be either 'agent' or 'service'")
+	}
+
+	if _, err := time.Parse(time.RFC3339, req.RequestCreatedAt); err != nil {
+		return fmt.Errorf("invalid timestamp format")
+	}
+	return nil
+}
+
+func ValidateCFMCP_Request(req shared.CFMCP_RequestBody) error {
+	if req.CFMCP_Payload.CFMCP_Data.Type == "" || req.CFMCP_Payload.CFMCP_Data.Name == "" {
+		return fmt.Errorf("missing required fields")
+	}
+
+	if !regexp.MustCompile(`^[a-zA-Z0-9_-]+$`).MatchString(req.CFMCP_Payload.CFMCP_Data.Type) {
+		return fmt.Errorf("invalid type format")
+	}
+
+	if req.CFMCP_Payload.CFMCP_Data.Type != "agent" && req.CFMCP_Payload.CFMCP_Data.Type != "service" {
 		return fmt.Errorf("type must be either 'agent' or 'service'")
 	}
 

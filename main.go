@@ -104,7 +104,7 @@ func handleConfigurationGetProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Extract components from event_id
-	agentID, serviceName, eventID, err := helper.ExtractEventInfo(req.EventInfo)
+	_, serviceName, eventID, err := helper.ExtractEventInfo(req.EventInfo)
 	if err != nil {
 		helper.SendErrorResponse(w, "Error extracting event_id: %v", http.StatusBadRequest)
 		return
@@ -179,7 +179,7 @@ func handleConfigurationGetProfile(w http.ResponseWriter, r *http.Request) {
 			}
 
 			logger.Log("INFO", "ws-configuration-service", logData)
-		}(agentID, req.CFGP_Payload.CFGP_Data.Id, eventInfo, (req))
+		}(req.CFGP_Payload.CFGP_Data.Id, req.CFGP_Payload.CFGP_Data.Name, eventInfo, (req))
 		return
 	}
 	response := shared.CFGP_ResponseBody{
@@ -225,12 +225,12 @@ func handleConfigurationGetProfile(w http.ResponseWriter, r *http.Request) {
 		}
 
 		logger.Log("INFO", "ws-configuration-service", logData)
-	}(agentID, req.CFGP_Payload.CFGP_Data.Id, eventInfo, (req))
+	}(req.CFGP_Payload.CFGP_Data.Id, req.CFGP_Payload.CFGP_Data.Name, eventInfo, (req))
 }
 
 func processGetProfile(req shared.CFGP_RequestBody) (string, string, error) {
 	log.WithFields(logrus.Fields{
-		"msg": "Key :" + req.CFGP_Payload.CFGP_Data.Name,
+		"msg": "Name :" + req.CFGP_Payload.CFGP_Data.Name,
 	}).Debug("Processing get profile request")
 
 	requestBody := map[string]interface{}{
@@ -413,10 +413,11 @@ func processProfileSynchronize(req shared.CFPS_RequestBody) (string, string, err
 		"event_info": req.EventInfo,
 		"payload": map[string]interface{}{
 			"data": map[string]interface{}{
-				"name":    req.CFPS_Payload.CFPS_Data.Name,
-				"id":      req.CFPS_Payload.CFPS_Data.Id,
-				"type":    req.CFPS_Payload.CFPS_Data.Type,
-				"profile": req.CFPS_Payload.CFPS_Data.Profile,
+				"name":      req.CFPS_Payload.CFPS_Data.Name,
+				"id":        req.CFPS_Payload.CFPS_Data.Id,
+				"type":      req.CFPS_Payload.CFPS_Data.Type,
+				"profile":   req.CFPS_Payload.CFPS_Data.Profile,
+				"ipaddress": req.CFPS_Payload.CFPS_Data.IpAddress,
 			},
 		},
 		"request_created_at": req.RequestCreatedAt,
@@ -434,6 +435,183 @@ func processProfileSynchronize(req shared.CFPS_RequestBody) (string, string, err
 
 	if response["status"] != "Success" {
 		return response["status"].(string), "", fmt.Errorf("failed to sync profile: %s", response["message"])
+	}
+
+	data := response["data"].(map[string]interface{})
+	return response["status"].(string), data["profile"].(string), nil
+}
+
+func handleConfigurationMCPSynchronize(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		helper.SendErrorResponse(w, "Invalid request method", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req shared.CFMCP_RequestBody
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		helper.SendErrorResponse(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	if err := validation.ValidateCFMCP_Request(req); err != nil {
+		helper.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Extract components from event_id
+	_, serviceName, eventID, err := helper.ExtractEventInfo(req.EventInfo)
+	if err != nil {
+		helper.SendErrorResponse(w, "Error extracting event_id: %v", http.StatusBadRequest)
+		return
+	}
+
+	var (
+		status        string
+		message       string
+		profile       string
+		getProfileErr error
+		wg            sync.WaitGroup
+	)
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		status, profile, getProfileErr = processMCPSyncProfile(req)
+	}()
+
+	wg.Wait()
+	if getProfileErr != nil {
+		log.WithFields(logrus.Fields{
+			"msg": getProfileErr,
+		}).Error("Error processing get profile request")
+	}
+	eventInfo := strings.Replace(req.EventInfo, serviceName, "WS_CONFIGURATION_SERVICE", -1)
+
+	if status == "Success" {
+		message = "Profile retrieved successfully"
+	} else {
+		message = "Failed to retrieve profile"
+	}
+
+	if profile == "" {
+		response := shared.CFGP_ResponseBody{
+			Status:  status,
+			Message: message,
+			Data: shared.CFGP_ResponseData{
+				Type: req.CFMCP_Payload.CFMCP_Data.Type,
+				Name: req.CFMCP_Payload.CFMCP_Data.Name,
+				Id:   req.CFMCP_Payload.CFMCP_Data.Id,
+			},
+			EventInfo:          eventInfo,
+			RequestCreatedAt:   req.RequestCreatedAt,
+			RequestProcessedAt: time.Now().UTC().Format("2006-01-02T15:04:05Z"),
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+
+		log.Infof("POST %v - 200", r.URL)
+		// Log the request to the logg collector
+		go func(agentID string, agentName string, eventInfo string, rawRequest interface{}) {
+			// Log the request to the log collector
+			logData := map[string]interface{}{
+				"name":                 "ws-configuration-service",
+				"agent_id":             agentID,
+				"agent_name":           agentName,
+				"source":               strings.ToLower(serviceName),
+				"destination":          "ws-configuration-service",
+				"event_info":           eventInfo,
+				"event_id":             eventID,
+				"type":                 "SERVICE_EVENT",
+				"action":               "GET_PROFILE",
+				"action_result":        "GET_PROFILE_FAIL",
+				"action_status":        "FAILURE",
+				"request_created_at":   req.RequestCreatedAt,
+				"request_processed_at": time.Now().UTC().Format("2006-01-02T15:04:05Z"),
+				"title":                "Received request from agent",
+				"raw_request":          rawRequest,
+				"timestamp":            time.Now().UTC().Format("2006-01-02T15:04:05Z"),
+			}
+
+			logger.Log("INFO", "ws-configuration-service", logData)
+		}(req.CFMCP_Payload.CFMCP_Data.Id, req.CFMCP_Payload.CFMCP_Data.Name, eventInfo, (req))
+		return
+	}
+	response := shared.CFGP_ResponseBody{
+		Status:  status,
+		Message: message,
+		Data: shared.CFGP_ResponseData{
+			Type:    req.CFMCP_Payload.CFMCP_Data.Type,
+			Name:    req.CFMCP_Payload.CFMCP_Data.Name,
+			Id:      req.CFMCP_Payload.CFMCP_Data.Id,
+			Profile: profile,
+		},
+		EventInfo:          eventInfo,
+		RequestCreatedAt:   req.RequestCreatedAt,
+		RequestProcessedAt: time.Now().UTC().Format("2006-01-02T15:04:05Z"),
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+
+	if profile != "" {
+		handlerRedis(req.CFMCP_Payload.CFMCP_Data.Name, profile)
+	}
+
+	log.Infof("POST %v - 200", r.URL)
+	// Log the request to the logg collector
+	go func(agentID string, agentName string, eventInfo string, rawRequest interface{}) {
+		// Log the request to the log collector
+		logData := map[string]interface{}{
+			"name":                 "ws-configuration-service",
+			"agent_id":             agentID,
+			"agent_name":           agentName,
+			"source":               strings.ToLower(serviceName),
+			"destination":          "ws-configuration-service",
+			"event_info":           eventInfo,
+			"event_id":             eventID,
+			"type":                 "SERVICE_EVENT",
+			"action":               "GET_PROFILE",
+			"action_result":        "GET_PROFILE_SUCCESS",
+			"action_status":        "SUCCESSED",
+			"request_created_at":   req.RequestCreatedAt,
+			"request_processed_at": time.Now().UTC().Format("2006-01-02T15:04:05Z"),
+			"title":                "Received request from agent",
+			"raw_request":          rawRequest,
+			"timestamp":            time.Now().UTC().Format("2006-01-02T15:04:05Z"),
+		}
+
+		logger.Log("INFO", "ws-configuration-service", logData)
+	}(req.CFMCP_Payload.CFMCP_Data.Id, req.CFMCP_Payload.CFMCP_Data.Name, eventInfo, (req))
+}
+
+func processMCPSyncProfile(req shared.CFMCP_RequestBody) (string, string, error) {
+	log.WithFields(logrus.Fields{
+		"msg": "Name :" + req.CFMCP_Payload.CFMCP_Data.Name,
+	}).Debug("Processing get profile request")
+
+	requestBody := map[string]interface{}{
+		"event_info": req.EventInfo,
+		"payload": map[string]interface{}{
+			"data": map[string]interface{}{
+				"name": req.CFMCP_Payload.CFMCP_Data.Name,
+				"id":   req.CFMCP_Payload.CFMCP_Data.Id,
+				"type": req.CFMCP_Payload.CFMCP_Data.Type,
+			},
+		},
+		"request_created_at": req.RequestCreatedAt,
+	}
+
+	responseData, err := makeHTTPRequest(os.Getenv("WS_CONTROLLER_PROCESSOR_URL"), os.Getenv("WS_CONTROLLER_PROCESSOR_ENDPOINT")+"/profile", requestBody)
+	if err != nil {
+		return "Error", "", err
+	}
+
+	var response map[string]interface{}
+	if err := json.Unmarshal(responseData, &response); err != nil {
+		return response["status"].(string), "", fmt.Errorf("failed to unmarshal response: %v", err)
+	}
+
+	if response["status"] != "Success" {
+		return response["status"].(string), "", fmt.Errorf("failed to get profile: %s", response["message"])
 	}
 
 	data := response["data"].(map[string]interface{})
@@ -538,8 +716,11 @@ func main() {
 	// Wrap the handler with a 30-second timeout
 	timeoutHandlerCFGP := http.TimeoutHandler(apiKeyAuthMiddleware(http.HandlerFunc(handleConfigurationGetProfile)), 30*time.Second, "Request timed out")
 	timeoutHandlerCFPS := http.TimeoutHandler(apiKeyAuthMiddleware(http.HandlerFunc(handleConfigurationProfileSynchronize)), 30*time.Second, "Request timed out")
+	timeoutHandlerCFMCP := http.TimeoutHandler((http.HandlerFunc(handleConfigurationMCPSynchronize)), 30*time.Second, "Request timed out")
+
 	// Register the timeout handler
 	http.Handle("/api/v1/ws/services/configuration/profile", timeoutHandlerCFGP)
 	http.Handle("/api/v1/ws/services/configuration/profile/synchronize", timeoutHandlerCFPS)
+	http.Handle("/api/v1/ws/services/configuration/mcp/synchronize", timeoutHandlerCFMCP)
 	log.Fatal(http.ListenAndServe(":5004", nil))
 }
