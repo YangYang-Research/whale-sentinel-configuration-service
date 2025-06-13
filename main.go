@@ -413,10 +413,11 @@ func processProfileSynchronize(req shared.CFPS_RequestBody) (string, string, err
 		"event_info": req.EventInfo,
 		"payload": map[string]interface{}{
 			"data": map[string]interface{}{
-				"name":    req.CFPS_Payload.CFPS_Data.Name,
-				"id":      req.CFPS_Payload.CFPS_Data.Id,
-				"type":    req.CFPS_Payload.CFPS_Data.Type,
-				"profile": req.CFPS_Payload.CFPS_Data.Profile,
+				"name":      req.CFPS_Payload.CFPS_Data.Name,
+				"id":        req.CFPS_Payload.CFPS_Data.Id,
+				"type":      req.CFPS_Payload.CFPS_Data.Type,
+				"profile":   req.CFPS_Payload.CFPS_Data.Profile,
+				"ipaddress": req.CFPS_Payload.CFPS_Data.IpAddress,
 			},
 		},
 		"request_created_at": req.RequestCreatedAt,

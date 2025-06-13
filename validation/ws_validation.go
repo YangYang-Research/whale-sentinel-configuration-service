@@ -10,7 +10,7 @@ import (
 
 // Helper functions
 func ValidateCFGP_Request(req shared.CFGP_RequestBody) error {
-	if req.CFGP_Payload.CFGP_Data.Type == "" || req.CFGP_Payload.CFGP_Data.Name == "" || req.CFGP_Payload.CFGP_Data.Id == "" {
+	if req.CFGP_Payload.CFGP_Data.Type == "" || req.CFGP_Payload.CFGP_Data.Name == "" {
 		return fmt.Errorf("missing required fields")
 	}
 
@@ -19,7 +19,7 @@ func ValidateCFGP_Request(req shared.CFGP_RequestBody) error {
 	}
 
 	if req.CFGP_Payload.CFGP_Data.Type != "agent" && req.CFGP_Payload.CFGP_Data.Type != "service" {
-		return fmt.Errorf("type must be either 'agent' or 'service'")
+		return fmt.Errorf("type must be either 'agent', 'service'")
 	}
 
 	if _, err := time.Parse(time.RFC3339, req.RequestCreatedAt); err != nil {
