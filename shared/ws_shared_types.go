@@ -48,7 +48,7 @@ type (
 		Name      string                 `json:"name"`
 		Id        string                 `json:"id"`
 		Profile   map[string]interface{} `json:"profile"`
-		IpAddress string                 `json:"ipaddress"`
+		IpAddress string                 `json:"ip_address"`
 	}
 
 	CFPS_ResponseBody struct {
