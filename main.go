@@ -85,6 +85,12 @@ func handlerRedis(key string, value string) (string, error) {
 	}
 }
 
+func handlerHealth(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"status":"ok"}`))
+}
+
 // handleConfigurationGetProfile processes incoming requests
 func handleConfigurationGetProfile(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -447,11 +453,11 @@ func processProfileSynchronize(req shared.CFPS_RequestBody) (string, string, err
 		"event_info": req.EventInfo,
 		"payload": map[string]interface{}{
 			"data": map[string]interface{}{
-				"name":       req.CFPS_Payload.CFPS_Data.Name,
-				"id":         req.CFPS_Payload.CFPS_Data.Id,
-				"type":       req.CFPS_Payload.CFPS_Data.Type,
-				"profile":    req.CFPS_Payload.CFPS_Data.Profile,
-				"ip_address": req.CFPS_Payload.CFPS_Data.IpAddress,
+				"name":             req.CFPS_Payload.CFPS_Data.Name,
+				"id":               req.CFPS_Payload.CFPS_Data.Id,
+				"type":             req.CFPS_Payload.CFPS_Data.Type,
+				"profile":          req.CFPS_Payload.CFPS_Data.Profile,
+				"host_information": req.CFPS_Payload.CFPS_Data.HostInformation,
 			},
 		},
 		"request_created_at": req.RequestCreatedAt,
@@ -765,11 +771,13 @@ func main() {
 	logCompression, _ := strconv.ParseBool(os.Getenv("LOG_COMPRESSION"))
 	logger.SetupWSLogger("ws-configuration-service", logMaxSize, logMaxBackups, logMaxAge, logCompression)
 	// Wrap the handler with a 30-second timeout
+	timeoutHandlerHealth := http.TimeoutHandler(http.HandlerFunc(handlerHealth), 30*time.Second, "Request time out")
 	timeoutHandlerCFGP := http.TimeoutHandler(apiKeyAuthMiddleware(http.HandlerFunc(handleConfigurationGetProfile)), 30*time.Second, "Request timed out")
 	timeoutHandlerCFPS := http.TimeoutHandler(apiKeyAuthMiddleware(http.HandlerFunc(handleConfigurationProfileSynchronize)), 30*time.Second, "Request timed out")
 	timeoutHandlerCFMCP := http.TimeoutHandler((http.HandlerFunc(handleConfigurationMCPSynchronize)), 30*time.Second, "Request timed out")
 
 	// Register the timeout handler
+	http.Handle("/health", timeoutHandlerHealth)
 	http.Handle("/api/v1/ws/services/configuration/profile", timeoutHandlerCFGP)
 	http.Handle("/api/v1/ws/services/configuration/profile/synchronize", timeoutHandlerCFPS)
 	http.Handle("/api/v1/ws/services/configuration/mcp/synchronize", timeoutHandlerCFMCP)

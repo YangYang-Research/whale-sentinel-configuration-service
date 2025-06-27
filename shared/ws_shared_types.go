@@ -44,11 +44,11 @@ type (
 	}
 
 	CFPS_Data struct {
-		Type      string                 `json:"type"`
-		Name      string                 `json:"name"`
-		Id        string                 `json:"id"`
-		Profile   map[string]interface{} `json:"profile"`
-		IpAddress string                 `json:"ip_address"`
+		Type            string                 `json:"type"`
+		Name            string                 `json:"name"`
+		Id              string                 `json:"id"`
+		Profile         map[string]interface{} `json:"profile"`
+		HostInformation map[string]interface{} `json:"host_information"`
 	}
 
 	CFPS_ResponseBody struct {
